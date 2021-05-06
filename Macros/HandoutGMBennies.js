@@ -17,6 +17,7 @@
 //
 // Limitations:  
 //  1) The macro will only assign Bennies to Actors that are in the current combat encounter tracker.
+//  2) The macro identifies GM characters as those not owned by a player with the Hostile disposition.
 
 // ////////////////////////////////
 //         Code Section 
@@ -25,14 +26,14 @@ async function HandoutGMBennies()
 {
 
    // 1. Gets a list of all actors in the current combat.
-   // 2. Filters on NPC status (hasPlayerOwner == false) and wildcard (isWildcard == true) attributes
+   // 2. Filters on NPC status (hasPlayerOwner == false) and wildcard (isWildcard == true) attributes with a hostile disposition (token.disposition < 0)
    // 3. Increase the bennies by 1 for each remaining actor.
-   await game.combat.combatants.filter(a => a.actor.hasPlayerOwner == false && a.actor.isWildcard == true).forEach(a => a.actor.getBenny())
+   await game.combat.combatants.filter(a => a.actor.hasPlayerOwner == false && a.actor.isWildcard == true  && a.token.disposition < 0).forEach(a => a.actor.getBenny())
 
    // Fetchs the number of bennies that the GM has
-   let b = user.getFlag("swade","bennies");
+   let b = game.user.getFlag("swade","bennies");
    // Increases the number of bennies by 1 and sets the value
-   await user.setFlag("swade","bennies", b + 1);
+   await game.user.setFlag("swade","bennies", b + 1);
 
 }
 
