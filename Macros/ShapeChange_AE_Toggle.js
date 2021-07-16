@@ -14,6 +14,11 @@
 // Limitations:  
 //  1) The macro works with only one form; future updates will incude the ability to pick between multiple forms.
 //  2) The macro does not create the Active Effect. It needs to be added to the character ahead of time.
+//  3) Skills are not created or remove.  If a skill does not exist in a form, make it d4-2
+
+
+// Change Log
+// July 15, 2021  Updated to Foundry 0.8.8
 
 // ////////////////////////////////
 //         Setup Section 
@@ -33,6 +38,11 @@ let SCALE = 1
 // The Active Effect to Toggle. Name needs to be exact.
 let AE = "<Replace with name of Active Effect>"
 
+// Array of Skills to modify when shape shifting
+let SKILLS = [
+ {skill:"Example",human:{sides:4, modifier:0},form:{sides:8, modifier:0}},
+];
+
 
 // ////////////////////////////////
 //         Code Section 
@@ -43,21 +53,43 @@ async function ShapeChange_AE_Toggle()
 {
 	// Make sure that we have a token selected and that we own it
    if (actor !== undefined && actor !== null && actor.owner)
-   {
-   	  // Look for the Active Effect
-      let form = actor.data.effects.find(f => f.label == AE)
+   {   	  
+      // Look for the Active Effect
+      let form = actor.data.effects.find(f => f.data.label == AE)
       
       // If Active Effect is not found, raise an error
       if (form !== undefined && form !== null)
       {
-      	  // Update the token image and size.
-          await token.update({
-            img: !form.disabled ? HUMAN : FORM,
-            width: !form.disabled ? 1: SCALE ,
-            height: !form.disabled ? 1: SCALE 
+         // Update the token image and size.
+         await token.document.update({
+            img: !form.data.disabled ? HUMAN : FORM,
+            width: !form.data.disabled ? 1: SCALE ,
+            height: !form.data.disabled ? 1: SCALE 
           })
-          // Toggle the Active Effect
-          await token.actor.updateEmbeddedEntity("ActiveEffect", {"_id": form._id, "disabled" : !form.disabled});
+          
+         // Toggle the Active Effect
+         await form.update({"disabled" : !form.data.disabled});
+
+         // Loop through the skills and update
+         // The easiest way (that I have found) is to create a JSON string and call importFromJSON
+         for (let i = 0 ; i < SKILLS.length; i++)
+         {
+         	  // look for the skill by name
+            let skill = actor.data.items.find( a => a.name == SKILLS[i].skill);
+            
+            // reusable object to update skills
+            let update = {data:{die : {sides :4, modifier : 0} }}
+            
+            // If the skill is found, update it.
+            if (skill)
+            { 
+               update.data.die.sides = SKILLS[i][form.data.disabled ? "human":"form"].sides;
+               update.data.die.modifier = SKILLS[i][form.data.disabled ? "human":"form"].modifier ;
+               
+               // call importFromJSON to update the skill  
+               await skill.importFromJSON(JSON.stringify(update))
+            }
+         }
       }
       else
       {
