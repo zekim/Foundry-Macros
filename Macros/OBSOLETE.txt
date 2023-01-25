@@ -1,0 +1,1 @@
+These macros are obsolete as of Foundry 0.10
