@@ -1,0 +1,320 @@
+<html>
+<head>
+<!--
+MIT License
+
+Copyright (c) 2023 Michael Zebrowski
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<style>
+  .tt { border : solid black thin; padding:1em}
+  .tt th { padding:0.5em; text-align:center }
+  .tt td { padding:0.5em; text-align:center }
+  .blue td {background-color:#0000ff; color:#ffffff}
+  .fushia td {background-color:#ff00ff; color:#ffffff}
+  .red td {background-color:#ff0000; color:#ffffff}
+  .green td {background-color:#00ff00; color:#0}
+  .blue td {background-color:#0000ff; color:#ffffff}
+</style>
+</head>
+<body>
+<p>Select HTML File.  Result will be copied to clipboard</p>
+
+<input type="file"
+       id="svg" name="svg"
+       accept="text/svg, .svg">
+
+<table class="tt">
+<tr><th>Color</th><th>Common Name</th><th>Door</th><th>Sight</th><th>Light</th><th>Movement</th></tr>
+<tr class="blue"><td>#0000ff</td><td>Door</td><td>Yes</td><td>Normal</td><td>Normal</td><td>Block</td></tr>
+<tr class="fushia"><td>#ff00ff</td><td>Window</td><td>No</td><td>None</td><td>None</td><td>Block</td></tr>
+<tr class="red"><td>#ff0000</td><td>Etherial</td><td>No</td><td>Normal</td><td>Normal</td><td>Not Blocked</td></tr>
+<tr class="green"><td>#00ff00</td><td>Terrian Box</td><td>No</td><td>Limited</td><td>Limited</td><td>Block</td></tr>
+<tr><td>Rest</td><td>Normal</td><td>No</td><td>Normal</td><td>Normal</td><td>Block</td></tr>
+</table>
+<a id="downloadBtn"></a> 
+<script>
+
+function evaluateXPath(aNode, aExpr) {
+  let xpe = new XPathEvaluator();
+  let nsResolver = xpe.createNSResolver(aNode.ownerDocument == null ?   aNode.documentElement : aNode.ownerDocument.documentElement);
+  let result = xpe.evaluate(aExpr, aNode, nsResolver, 0, null);
+  let found = [];
+  let res;
+  while (res = result.iterateNext())
+    found.push(res);
+  return found;
+}
+
+const NORMAL = 0
+const TERRAINBOX = 1
+const DOOR = 2
+const WINDOW = 3
+const ETHERIAL = 4
+
+function isStroke(data)
+{
+	let a = data.split(":"); 
+	return ( a[0] == "stroke")
+}
+
+function wallType(data)
+{
+	  let ret = NORMAL
+		if (data === null || data === undefined)
+			return ret
+		let d = data.split(";").find(isStroke)
+		if (d === null || d=== undefined || d.split(":").length < 2)
+			return ret
+	  switch (String(d.split(":")[1]).toLowerCase())
+	  {
+	  	case ("#0000ff"):
+	  		ret = DOOR;
+	  		break;
+	  	case ("#00ff00"):
+	  		ret = TERRAINBOX ;
+	  		break;	
+        case ("#ff00ff"):
+	  		ret = WINDOW
+	  		break;	  	
+        case ("#ff0000"):
+	  		ret = ETHERIAL
+	  		break;		  
+         }		   	   		
+	  return ret;
+}
+const list = ["1","2","3","4","5","6","7","8","9","0","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"]
+function genID()
+{
+	let ret = []
+	while (ret.length < 16)
+	{
+		 ret.push(list[Math.floor(list.length * Math.random())])
+	}		
+	return ret.join("")
+}
+
+const square = 100;
+const offset = square * 4
+let offsetX = 0
+let offsetY = 0
+const emptyMap = {
+  "name": "MuddyPath",
+  "navigation": false,
+  "navOrder": 0,
+  "navName": "",
+  "background": {
+    "src": "",
+    "scaleX": 1,
+    "scaleY": 1,
+    "offsetX": 0,
+    "offsetY": 0,
+    "rotation": 0,
+    "tint": null
+  },
+  "foreground": null,
+  "foregroundElevation": 4,
+  "thumb": "",
+  "width": 4100,
+  "height": 4100,
+  "padding": 0,
+  "initial": {
+    "x": null,
+    "y": null,
+    "scale": null
+  },
+  "backgroundColor": "#9c9c9c",
+  "grid": {
+    "type": 1,
+    "size": 100,
+    "color": "#000000",
+    "alpha": 0.35,
+    "distance": 1,
+    "units": ""
+  },
+  "tokenVision": true,
+  "fogExploration": true,
+  "fogReset": 1660769143211,
+  "globalLight": true,
+  "globalLightThreshold": 0.65,
+  "darkness": 0,
+  "fogOverlay": null,
+  "fogExploredColor": "#787878",
+  "fogUnexploredColor": "#404040",
+  "drawings": [],
+  "tokens": [],
+  "lights": [],
+  "notes": [],
+  "sounds": [],
+  "templates": [],
+  "tiles": [],
+  "walls": [],
+  "playlist": null,
+  "playlistSound": null,
+  "journal": null,
+  "journalEntryPage": null,
+  "weather": "",
+  "flags": {},
+  "_stats": {}
+}
+
+
+function startExtract(event)
+{
+		const [file] = event.target.files;
+		let string = "";
+		if (file) {
+			const reader = new FileReader();
+			reader.addEventListener("load", () => {
+			extract(reader.result);
+			
+			});
+			try
+			{
+			emptyMap.name = file.name.replace(".svg","");
+			reader.readAsText(file);
+			}
+			catch (e)
+			{
+				alert("error reading file");
+			}
+		}
+		else
+		{
+			alert("error reading file");
+		}
+		
+}
+
+//Light/sight/sound Contants
+   const normal = 20;
+   const limited = 10;
+   const none = 0;
+   
+// Door
+   const secret = 2;
+   const door = 1;
+   const wall = 0;
+
+
+function calcOffsets(height, width)
+{
+	emptyMap.height = height;
+	emptyMap.width = width;
+	let temp = Math.min(height,width);
+	let padding = (Math.ceil((offset * 100 / temp)/5) * 5) /100;
+	emptyMap.padding = padding;
+	let offsetPadding = Math.ceil(offset * (1 + padding) / square) * square;
+	offsetX = offsetPadding
+	offsetY = offsetPadding
+}
+function extract(string)
+{
+	
+	let ret = []
+	try
+	{
+		let parser = new DOMParser();
+		let xmlDoc = parser.parseFromString(string,"application/xml");
+		calcOffsets(Number(xmlDoc.documentElement.getAttribute("height")),Number(xmlDoc.documentElement.getAttribute("width")))
+		nodes = evaluateXPath(xmlDoc.documentElement,"//*[name()='g' and @id='walls']/*[name()='path']");
+		for( let node of nodes)
+		{
+		  let d = node.getAttribute("d").split(" ")		  
+		  let points = []
+		  for (let n of d)
+		  {
+		  	let parsed = parseInt(n);
+  			if (!isNaN(parsed)) 
+  			{
+  				points.push(parsed)
+  			}
+  		   }
+                let wType = wallType(node.getAttribute("style"))
+                wall: {
+                  for (let i = 0; i < points.length; i += 2)
+                  {
+                       let x1 = i + 2 >= points.length ? 0 : i + 2;
+                       let y1 = i + 3 >= points.length ? 1 : i + 3;
+                       p = [points[i] + offsetX,points[i+1] + offsetY,points[x1] + offsetX,points[y1] + offsetY]      
+  		       switch (wType )
+  		       {
+  			default:
+			    //
+  				ret.push({"_id":genID(),"flags":{},"c":p,"light": normal, "move": normal, "sight": normal, "sound": normal, "dir": 0, "door": wall, "ds": 0})
+  				break;
+  			case(DOOR):
+  				ret.push({"_id":genID(),"flags":{},"c":p,"light": normal, "move": normal, "sight": normal, "sound": limited, "dir": 0, "door": door, "ds": 0})
+  				break;
+  			case(ETHERIAL):
+				// stops light, not movement
+  				ret.push({"_id":genID(),"flags":{},"c":p,"light": normal, "move": none, "sight": normal, "sound": none, "dir": 0, "door": wall, "ds": 0})
+  				break;
+  			case(WINDOW):
+  				ret.push({"_id":genID(),"flags":{},"c":p,"light": none, "move": normal, "sight": none, "sound": limited, "dir": 0, "door": wall, "ds": 0})
+				
+				
+				
+				
+  				break;
+  			case(TERRAINBOX):
+                                let w = 5
+                                let angle = Math.atan2(p[3] - p[1],p[2] - p[0]) + (Math.PI / 2);
+                                let cx = w * Math.cos(angle);
+                                let cy = w * Math.sin(angle);
+ 
+  				ret.push({"_id":genID(),"flags":{},"c":[p[0] + cx,p[1] + cy,p[2] + cx,p[3]+ cy],"light": limited, "move": normal, "sight": limited, "sound": limited, "dir": 0, "door": wall, "ds": 0})
+  				ret.push({"_id":genID(),"flags":{},"c":[p[0] - cx,p[1] - cy,p[2] - cx,p[3]- cy],"light": limited, "move": normal, "sight": limited, "sound": limited, "dir": 0, "door": wall, "ds": 0})
+  				ret.push({"_id":genID(),"flags":{},"c":[p[0] + cx,p[1] + cy,p[0] - cx,p[1]- cy],"light": limited, "move": normal, "sight": limited, "sound": limited, "dir": 0, "door": wall, "ds": 0})
+  				ret.push({"_id":genID(),"flags":{},"c":[p[2] - cx,p[3] - cy,p[2] + cx,p[3]+ cy],"light": limited, "move": normal, "sight": limited, "sound": limited, "dir": 0, "door": wall, "ds": 0})
+  				break;  				  				
+  	                }
+                        if (points.length == 4)
+                        {
+                            break wall;
+                        }
+                   }
+                 } // wall
+		}		
+	}
+	catch(e)
+	{
+		  alert("Error");
+		  return;
+	}
+	emptyMap.walls = ret;
+	let output = JSON.stringify(emptyMap)
+	document.getElementById("downloadBtn").download = `${emptyMap.name}.json`
+  document.getElementById("downloadBtn").href = 'data:text/plain;charset=UTF-8,' + encodeURIComponent(output);
+  document.getElementById("downloadBtn").click();
+	//navigator.clipboard.writeText(output);
+	//alert("Copied to Clipboard");
+}
+
+
+function init()
+{
+   document.getElementById("svg").addEventListener("change", startExtract, false)
+}
+init()
+
+</script>
+</body>
+</html>

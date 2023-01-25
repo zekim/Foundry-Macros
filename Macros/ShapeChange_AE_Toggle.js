@@ -19,6 +19,7 @@
 
 // Change Log
 // July 15, 2021  Updated to Foundry 0.8.8
+// August 5, 2021  Corrected the updating of skills to include attritue and wild die
 
 // ////////////////////////////////
 //         Setup Section 
@@ -40,7 +41,7 @@ let AE = "<Replace with name of Active Effect>"
 
 // Array of Skills to modify when shape shifting
 let SKILLS = [
- {skill:"Example",human:{sides:4, modifier:0},form:{sides:8, modifier:0}},
+ {skill:"Example",human:{sides:4, modifier:0,attribute:"smarts","wild-die":6 },form:{sides:8, modifier:0,attribute:"smarts","wild-die":6 }},
 ];
 
 
@@ -78,13 +79,15 @@ async function ShapeChange_AE_Toggle()
             let skill = actor.data.items.find( a => a.name == SKILLS[i].skill);
             
             // reusable object to update skills
-            let update = {data:{die : {sides :4, modifier : 0} }}
+            let update = {data:{die : {sides :4, modifier : 0}, attribute:"","wild-die":{sides:6} }}
             
             // If the skill is found, update it.
             if (skill)
             { 
                update.data.die.sides = SKILLS[i][form.data.disabled ? "human":"form"].sides;
                update.data.die.modifier = SKILLS[i][form.data.disabled ? "human":"form"].modifier ;
+               update.data.attribute = SKILLS[i][form.data.disabled ? "human":"form"].attribute ;
+               update.data["wild-die"]["sides"]= SKILLS[i][form.data.disabled ? "human":"form"]["wild-die"];
                
                // call importFromJSON to update the skill  
                await skill.importFromJSON(JSON.stringify(update))

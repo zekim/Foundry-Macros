@@ -34,7 +34,8 @@ async function HandoutGMBennies()
    let b = game.user.getFlag("swade","bennies");
    // Increases the number of bennies by 1 and sets the value
    await game.user.setFlag("swade","bennies", b + 1);
-
+   let c = game.user.getFlag("swade","bennies");
+   ui.notifications.info(`GM had ${b} bennies; They now have ${c} bennies.`);
 }
 
 // Call the async function
